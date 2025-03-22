@@ -21,6 +21,9 @@ public class Showtime {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "movie_id", nullable = false, insertable = false, updatable = false)
+    private Long movieId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "movie_id", nullable = false)
     private Movie movie;
