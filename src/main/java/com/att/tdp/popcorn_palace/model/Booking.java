@@ -34,7 +34,7 @@ public class Booking {
     @Column(name = "seat_number", nullable = false)
     private Integer seatNumber;
 
-    @NotBlank(message = "User ID cannot be blank")
+    @NotNull(message = "User ID is required")
     @Column(name = "user_id", nullable = false)
-    private String userId;
+    private UUID userId;
 }
