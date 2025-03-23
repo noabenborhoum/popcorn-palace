@@ -6,7 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.time.Year;
 
 @Entity
 @Table(name = "movies")
@@ -39,6 +38,8 @@ public class Movie {
     private Double rating;
 
     @NotNull(message = "Movie release year is required and cannot be empty")
+    @Min(value = 1888, message = "Release year must be at least 1888") // the first movie was made in 1888
+    @Max(value = 2100, message = "Release year must not exceed 2100")
     @Column(name = "release_year", nullable = false)
-    private Year releaseYear;
+    private Integer releaseYear;
 }

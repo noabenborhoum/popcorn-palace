@@ -22,6 +22,6 @@ public class BookingDTO {
     @Min(value = 1, message = "Seat number must be at least 1")
     private Integer seatNumber;
 
-    @NotBlank(message = "User ID is required")
+    @NotNull(message = "User ID is required")
     private UUID userId;
 }

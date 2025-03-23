@@ -29,6 +29,6 @@ public class ShowtimeDTO {
     private LocalDateTime endTime;
 
     @NotNull(message = "Price is required")
-    @Min(value = 0.0, message = "Price must be at least 0")
+    @Min(value = (long) 0.0, message = "Price must be at least 0")
     private Double price;
 }
