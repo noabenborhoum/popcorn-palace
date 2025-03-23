@@ -1,7 +1,6 @@
 package com.att.tdp.popcorn_palace.service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -36,23 +35,22 @@ public class MovieService {
 
     public MovieDTO getMovieByTitle(String title) {
         return convertToDTO(
-                movieRepository.findByTitle(title).orElseThrow(() -> new RuntimeException("No movie found with title " + title)));
+                movieRepository.findByTitle(title)
+                        .orElseThrow(() -> new RuntimeException("No movie found with title " + title)));
     }
 
     public List<MovieDTO> getMoviesByGenre(String genre) {
-        Optional<Movie> movies = movieRepository.findByGenre(genre);
-
+        List<Movie> movies = movieRepository.findByGenre(genre);
         if (movies.isEmpty()) {
             throw new EntityNotFoundException("No movies found for genre " + genre);
         }
-
         return movies.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     public List<MovieDTO> getMoviesByReleaseYear(Integer year) {
-        Optional<Movie> movies = movieRepository.findByReleaseYear(year);
+        List<Movie> movies = movieRepository.findByReleaseYear(year);
 
         if (movies.isEmpty()) {
             throw new EntityNotFoundException("No movies found for release year " + year);
@@ -93,13 +91,14 @@ public class MovieService {
         Movie updatedMovie = movieRepository.save(movie);
         return convertToDTO(updatedMovie);
     }
+
     @Transactional
     public void deleteMovie(Long id) {
-       if (!movieRepository.existsById(id)) {
-        throw new EntityNotFoundException("Movie with id " + id + " not found");
-       }
+        if (!movieRepository.existsById(id)) {
+            throw new EntityNotFoundException("Movie with id " + id + " not found");
+        }
 
-       movieRepository.deleteById(id);
+        movieRepository.deleteById(id);
     }
 
     @Transactional

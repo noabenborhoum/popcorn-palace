@@ -73,9 +73,10 @@ public class BookingService {
                 .orElseThrow(() -> new EntityNotFoundException("Booking with ID " + bookingId + " not found"));
 
         // Check if showtime has already started
-        Showtime showtime = showtimeRepository.findById(booking.getShowtimeId())
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Showtime with ID " + booking.getShowtimeId() + " not found"));
+        Showtime showtime = booking.getShowtime();
+        if (showtime == null) {
+            throw new EntityNotFoundException("Showtime for booking " + bookingId + " not found");
+        }
 
         LocalDateTime now = LocalDateTime.now();
         if (showtime.getStartTime().isBefore(now)) {
@@ -84,25 +85,24 @@ public class BookingService {
 
         bookingRepository.deleteById(bookingId);
     }
-    
+
     public BookingDTO getBookingById(UUID bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new EntityNotFoundException("Booking with ID " + bookingId + " not found"));
 
         return convertToDTO(booking);
     }
-    
+
     public List<BookingDTO> getBookingsByUser(UUID userId) {
         return bookingRepository.findByUserId(userId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
-   
     private BookingDTO convertToDTO(Booking booking) {
         return BookingDTO.builder()
                 .bookingId(booking.getBookingId())
-                .showtimeId(booking.getShowtimeId())
+                .showtimeId(booking.getShowtime().getId()) // Direct access to showtime's ID
                 .seatNumber(booking.getSeatNumber())
                 .userId(booking.getUserId())
                 .build();

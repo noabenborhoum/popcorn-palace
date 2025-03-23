@@ -34,6 +34,12 @@ public class ShowtimeService {
                 .collect(Collectors.toList());
     }
 
+    public ShowtimeDTO getShowtimeById(Long showtimeId) {
+        return showtimeRepository.findById(showtimeId)
+                .map(this::convertToDTO)
+                .orElseThrow(() -> new EntityNotFoundException("Showtime with id " + showtimeId + " not found"));
+    }
+
     public List<ShowtimeDTO> getShowtimesByMovie(Long movieId) {
         // Validate movie exists
         if (!movieRepository.existsById(movieId)) {
@@ -41,16 +47,6 @@ public class ShowtimeService {
         }
 
         return showtimeRepository.findByMovieId(movieId).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-
-    public List<ShowtimeDTO> getShowtimesByShowtime(Long showtimeId) {
-        if (!showtimeRepository.existsById(showtimeId)) {
-            throw new EntityNotFoundException("Showtime with ID " + showtimeId + " not found");
-        }
-
-        return showtimeRepository.findById(showtimeId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
