@@ -47,31 +47,56 @@ public class MovieController {
         return ResponseEntity.ok(movieService.getMovieById(id));
     }
 
+    @Operation(summary = "Get movie by title", description = "Retrieve a movie by its title")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the movie", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MovieDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Movie not found")
+    })
     @GetMapping("/title/{title}")
     public ResponseEntity<MovieDTO> getMovieByTitle(@PathVariable String title) {
         return ResponseEntity.ok(movieService.getMovieByTitle(title));
     }
 
+    @Operation(summary = "Get movies by genre", description = "Retrieve a list of movies by genre")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the movies", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MovieDTO.class)))
+    })
     @GetMapping("/genre/{genre}")
     public ResponseEntity<List<MovieDTO>> getMoviesByGenre(@PathVariable String genre) {
         return ResponseEntity.ok(movieService.getMoviesByGenre(genre));
     }
 
+    @Operation(summary = "Get movies by release year", description = "Retrieve a list of movies by release year")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the movies", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MovieDTO.class)))
+    })
     @GetMapping("/year/{year}")
     public ResponseEntity<List<MovieDTO>> getMoviesByReleaseYear(@PathVariable Integer year) {
         return ResponseEntity.ok(movieService.getMoviesByReleaseYear(year));
     }
 
+    @Operation(summary = "Add a movie", description = "Add a new movie to the database")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successfully added the movie", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MovieDTO.class)))
+    })
     @PostMapping
     public ResponseEntity<MovieDTO> addMovie(@Valid @RequestBody MovieDTO movieDTO) {
         return new ResponseEntity<>(movieService.addMovie(movieDTO), HttpStatus.CREATED);
     }
 
-    @PostMapping("/update/{title}")
+    @Operation(summary = "Update a movie", description = "Update an existing movie in the database")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully updated the movie", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MovieDTO.class)))
+    })
+    @PutMapping("/update/{title}")
     public ResponseEntity<MovieDTO> updateMovie(@PathVariable String title, @Valid @RequestBody MovieDTO movieDTO) {
         return ResponseEntity.ok(movieService.updateMovie(title, movieDTO));
     }
 
+    @Operation(summary = "Delete a movie by ID", description = "Delete a movie from the database by its ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Successfully deleted the movie")
+    })
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteMovieById(@PathVariable Long id) {
@@ -79,6 +104,10 @@ public class MovieController {
     }
 
     @DeleteMapping("/title/{title}")
+    @Operation(summary = "Delete a movie by title", description = "Delete a movie from the database by its title")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Successfully deleted the movie")
+    })
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteMovieByTitle(@PathVariable String title) {
         movieService.deleteMovie(title);

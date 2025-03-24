@@ -93,6 +93,12 @@ public class BookingService {
         return convertToDTO(booking);
     }
 
+    public List<BookingDTO> getAllBookings() {
+        return bookingRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
     public List<BookingDTO> getBookingsByUser(UUID userId) {
         return bookingRepository.findByUserId(userId).stream()
                 .map(this::convertToDTO)
