@@ -1,5 +1,3 @@
-To copy the contents of the Instructions.md file, here is the complete text:
-
 ```markdown
 # 🍿 Popcorn Palace - Setup Instructions
 
