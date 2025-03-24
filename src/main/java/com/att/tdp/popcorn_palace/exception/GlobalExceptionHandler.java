@@ -1,8 +1,6 @@
 package com.att.tdp.popcorn_palace.exception;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import jakarta.persistence.EntityExistsException;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

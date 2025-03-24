@@ -93,15 +93,6 @@ public class MovieService {
         return convertToDTO(updatedMovie);
     }
 
-    // @Transactional
-    // public void deleteMovie(Long id) {
-    // if (!movieRepository.existsById(id)) {
-    // throw new ResourceNotFoundException("Movie", "id", id);
-    // }
-
-    // movieRepository.deleteById(id);
-    // }
-
     @Transactional
     public void deleteMovie(String movieTitle) {
         if (!movieRepository.existsByTitle(movieTitle)) {

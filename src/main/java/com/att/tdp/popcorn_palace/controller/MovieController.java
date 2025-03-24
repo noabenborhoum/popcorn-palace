@@ -90,23 +90,12 @@ public class MovieController {
     })
     @PostMapping("/update/{title}")
     public ResponseEntity<MovieDTO> updateMovie(@PathVariable String title, @Valid @RequestBody MovieDTO movieDTO) {
+        movieService.updateMovie(title, movieDTO); // Add this line to actually update the movie
         return ResponseEntity
                 .ok()
                 .header("message", "Movie '" + title + "' was successfully updated")
                 .build();
     }
-
-    // @Operation(summary = "Delete a movie by ID", description = "Delete a movie
-    // from the database by its ID")
-    // @ApiResponses(value = {
-    // @ApiResponse(responseCode = "200", description = "Successfully deleted the
-    // movie")
-    // })
-    // @DeleteMapping("/{id}")
-    // @ResponseStatus(HttpStatus.NO_CONTENT)
-    // public void deleteMovieById(@PathVariable Long id) {
-    // movieService.deleteMovie(id);
-    // }
 
     @DeleteMapping("/{title}")
     @Operation(summary = "Delete a movie by title", description = "Delete a movie from the database by its title")
