@@ -67,14 +67,14 @@ public class ShowtimeController {
 
     @Operation(summary = "Add a showtime", description = "Create a new showtime")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Showtime created successfully"),
+            @ApiResponse(responseCode = "200", description = "Showtime created successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid showtime data"),
             @ApiResponse(responseCode = "404", description = "Movie not found"),
             @ApiResponse(responseCode = "409", description = "Overlapping showtime in theater")
     })
     @PostMapping
     public ResponseEntity<ShowtimeDTO> addShowtime(@Valid @RequestBody ShowtimeDTO showtimeDTO) {
-        return new ResponseEntity<>(showtimeService.addShowtime(showtimeDTO), HttpStatus.CREATED);
+        return new ResponseEntity<>(showtimeService.addShowtime(showtimeDTO), HttpStatus.OK);
     }
 
     @Operation(summary = "Update a showtime", description = "Update an existing showtime")
@@ -84,10 +84,10 @@ public class ShowtimeController {
             @ApiResponse(responseCode = "404", description = "Showtime not found"),
             @ApiResponse(responseCode = "409", description = "Overlapping showtime in theater")
     })
-    @PutMapping("/update/{id}")
-    public ResponseEntity<ShowtimeDTO> updateShowtime(@PathVariable Long id,
-            @Valid @RequestBody ShowtimeDTO showtimeDTO) {
-        return ResponseEntity.ok(showtimeService.updateShowtime(id, showtimeDTO));
+    @PostMapping("/update/{id}")
+    public ResponseEntity<Void> updateShowtime(@PathVariable Long id, @Valid @RequestBody ShowtimeDTO showtimeDTO) {
+        showtimeService.updateShowtime(id, showtimeDTO);
+        return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "Delete a showtime", description = "Delete an existing showtime")

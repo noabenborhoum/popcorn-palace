@@ -14,6 +14,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import com.att.tdp.popcorn_palace.dto.BookingDTO;
+import com.att.tdp.popcorn_palace.exception.ConflictException;
+import com.att.tdp.popcorn_palace.exception.InvalidRequestException;
+import com.att.tdp.popcorn_palace.exception.ResourceNotFoundException;
 import com.att.tdp.popcorn_palace.model.Booking;
 import com.att.tdp.popcorn_palace.model.Showtime;
 import com.att.tdp.popcorn_palace.repository.BookingRepository;
@@ -35,19 +38,17 @@ public class BookingService {
     public UUID bookTicket(BookingDTO bookingDTO) {
         // Validate that the showtime exists
         Showtime showtime = showtimeRepository.findById(bookingDTO.getShowtimeId())
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Showtime with ID " + bookingDTO.getShowtimeId() + " not found"));
-
+                .orElseThrow(() -> new ResourceNotFoundException("Showtime", "id", bookingDTO.getShowtimeId()));
         // Additional validation using the showtime object
         LocalDateTime now = LocalDateTime.now();
         if (showtime.getStartTime().isBefore(now)) {
-            throw new IllegalStateException("Cannot book tickets for a showtime that has already started");
+            throw new InvalidRequestException("Cannot book tickets for a showtime that has already started");
         }
 
         // Check if the seat is already booked
         if (bookingRepository.existsByShowtimeIdAndSeatNumber(
                 bookingDTO.getShowtimeId(), bookingDTO.getSeatNumber())) {
-            throw new EntityExistsException("Seat " + bookingDTO.getSeatNumber() +
+            throw new ConflictException("Seat " + bookingDTO.getSeatNumber() +
                     " is already booked for showtime " + bookingDTO.getShowtimeId());
         }
 
@@ -63,14 +64,14 @@ public class BookingService {
             Booking savedBooking = bookingRepository.save(booking);
             return savedBooking.getBookingId();
         } catch (DataIntegrityViolationException e) {
-            throw new EntityExistsException("Could not create booking: " + e.getMessage());
+            throw new ConflictException("Could not create booking: " + e.getMessage());
         }
     }
 
     @Transactional
     public void cancelBooking(UUID bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new EntityNotFoundException("Booking with ID " + bookingId + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Booking", "id", bookingId));
 
         // Check if showtime has already started
         Showtime showtime = booking.getShowtime();
@@ -80,7 +81,7 @@ public class BookingService {
 
         LocalDateTime now = LocalDateTime.now();
         if (showtime.getStartTime().isBefore(now)) {
-            throw new IllegalStateException("Cannot cancel tickets for a showtime that has already started");
+            throw new InvalidRequestException("Cannot cancel tickets for a showtime that has already started");
         }
 
         bookingRepository.deleteById(bookingId);
@@ -88,7 +89,7 @@ public class BookingService {
 
     public BookingDTO getBookingById(UUID bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new EntityNotFoundException("Booking with ID " + bookingId + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Booking", "id", bookingId));
 
         return convertToDTO(booking);
     }

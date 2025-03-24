@@ -3,13 +3,14 @@ package com.att.tdp.popcorn_palace.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.att.tdp.popcorn_palace.dto.MovieDTO;
+import com.att.tdp.popcorn_palace.exception.ConflictException;
+import com.att.tdp.popcorn_palace.exception.ResourceNotFoundException;
 import com.att.tdp.popcorn_palace.model.Movie;
 import com.att.tdp.popcorn_palace.repository.MovieRepository;
 
@@ -36,13 +37,13 @@ public class MovieService {
     public MovieDTO getMovieByTitle(String title) {
         return convertToDTO(
                 movieRepository.findByTitle(title)
-                        .orElseThrow(() -> new RuntimeException("No movie found with title " + title)));
+                        .orElseThrow(() -> new ResourceNotFoundException("Movie", "title", title)));
     }
 
     public List<MovieDTO> getMoviesByGenre(String genre) {
         List<Movie> movies = movieRepository.findByGenre(genre);
         if (movies.isEmpty()) {
-            throw new EntityNotFoundException("No movies found for genre " + genre);
+            throw new ResourceNotFoundException("Movie", "genre", genre);
         }
         return movies.stream()
                 .map(this::convertToDTO)
@@ -53,7 +54,7 @@ public class MovieService {
         List<Movie> movies = movieRepository.findByReleaseYear(year);
 
         if (movies.isEmpty()) {
-            throw new EntityNotFoundException("No movies found for release year " + year);
+            throw new ResourceNotFoundException("Movie", "release year", year);
         }
 
         return movies.stream()
@@ -63,7 +64,7 @@ public class MovieService {
 
     public MovieDTO addMovie(MovieDTO movieDTO) {
         if (movieRepository.existsByTitle(movieDTO.getTitle())) {
-            throw new IllegalArgumentException("Movie with title " + movieDTO.getTitle() + " already exists");
+            throw new ConflictException("Movie with title " + movieDTO.getTitle() + " already exists");
         }
 
         Movie movie = convertToEntity(movieDTO);
@@ -74,11 +75,11 @@ public class MovieService {
     @Transactional
     public MovieDTO updateMovie(String movieTitle, MovieDTO movieDTO) {
         Movie movie = movieRepository.findByTitle(movieTitle)
-                .orElseThrow(() -> new EntityNotFoundException("Movie with title " + movieTitle + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Movie", "title", movieTitle));
 
         // Check if new title already exists and is not the same movie
         if (!movieTitle.equals(movieDTO.getTitle()) && movieRepository.existsByTitle(movieDTO.getTitle())) {
-            throw new IllegalArgumentException("Movie with title '" + movieDTO.getTitle() + "' already exists");
+            throw new ConflictException("Movie with title " + movieDTO.getTitle() + " already exists");
         }
 
         // Update the existing movie with new values
@@ -92,19 +93,19 @@ public class MovieService {
         return convertToDTO(updatedMovie);
     }
 
-    @Transactional
-    public void deleteMovie(Long id) {
-        if (!movieRepository.existsById(id)) {
-            throw new EntityNotFoundException("Movie with id " + id + " not found");
-        }
+    // @Transactional
+    // public void deleteMovie(Long id) {
+    // if (!movieRepository.existsById(id)) {
+    // throw new ResourceNotFoundException("Movie", "id", id);
+    // }
 
-        movieRepository.deleteById(id);
-    }
+    // movieRepository.deleteById(id);
+    // }
 
     @Transactional
     public void deleteMovie(String movieTitle) {
         if (!movieRepository.existsByTitle(movieTitle)) {
-            throw new EntityNotFoundException("Movie with title " + movieTitle + " not found");
+            throw new ResourceNotFoundException("Movie", "title", movieTitle);
         }
 
         movieRepository.deleteByTitle(movieTitle);

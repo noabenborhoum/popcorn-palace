@@ -77,39 +77,47 @@ public class MovieController {
 
     @Operation(summary = "Add a movie", description = "Add a new movie to the database")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Successfully added the movie", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MovieDTO.class)))
+            @ApiResponse(responseCode = "200", description = "Successfully added the movie", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MovieDTO.class)))
     })
     @PostMapping
     public ResponseEntity<MovieDTO> addMovie(@Valid @RequestBody MovieDTO movieDTO) {
-        return new ResponseEntity<>(movieService.addMovie(movieDTO), HttpStatus.CREATED);
+        return new ResponseEntity<>(movieService.addMovie(movieDTO), HttpStatus.OK);
     }
 
     @Operation(summary = "Update a movie", description = "Update an existing movie in the database")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully updated the movie", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MovieDTO.class)))
     })
-    @PutMapping("/update/{title}")
+    @PostMapping("/update/{title}")
     public ResponseEntity<MovieDTO> updateMovie(@PathVariable String title, @Valid @RequestBody MovieDTO movieDTO) {
-        return ResponseEntity.ok(movieService.updateMovie(title, movieDTO));
+        return ResponseEntity
+                .ok()
+                .header("message", "Movie '" + title + "' was successfully updated")
+                .build();
     }
 
-    @Operation(summary = "Delete a movie by ID", description = "Delete a movie from the database by its ID")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Successfully deleted the movie")
-    })
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteMovieById(@PathVariable Long id) {
-        movieService.deleteMovie(id);
-    }
+    // @Operation(summary = "Delete a movie by ID", description = "Delete a movie
+    // from the database by its ID")
+    // @ApiResponses(value = {
+    // @ApiResponse(responseCode = "200", description = "Successfully deleted the
+    // movie")
+    // })
+    // @DeleteMapping("/{id}")
+    // @ResponseStatus(HttpStatus.NO_CONTENT)
+    // public void deleteMovieById(@PathVariable Long id) {
+    // movieService.deleteMovie(id);
+    // }
 
-    @DeleteMapping("/title/{title}")
+    @DeleteMapping("/{title}")
     @Operation(summary = "Delete a movie by title", description = "Delete a movie from the database by its title")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Successfully deleted the movie")
+            @ApiResponse(responseCode = "200", description = "Successfully deleted the movie")
     })
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteMovieByTitle(@PathVariable String title) {
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<Void> deleteMovieByTitle(@PathVariable String title) {
         movieService.deleteMovie(title);
+        return ResponseEntity.ok()
+                .header("message", "Movie '" + title + "' was successfully deleted")
+                .build();
     }
 }

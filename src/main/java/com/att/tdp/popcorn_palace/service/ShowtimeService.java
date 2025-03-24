@@ -11,6 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.att.tdp.popcorn_palace.dto.ShowtimeDTO;
+import com.att.tdp.popcorn_palace.exception.ResourceNotFoundException;
+import com.att.tdp.popcorn_palace.exception.ConflictException;
+import com.att.tdp.popcorn_palace.exception.InvalidRequestException;
 import com.att.tdp.popcorn_palace.model.Movie;
 import com.att.tdp.popcorn_palace.model.Showtime;
 import com.att.tdp.popcorn_palace.repository.MovieRepository;
@@ -37,13 +40,13 @@ public class ShowtimeService {
     public ShowtimeDTO getShowtimeById(Long showtimeId) {
         return showtimeRepository.findById(showtimeId)
                 .map(this::convertToDTO)
-                .orElseThrow(() -> new EntityNotFoundException("Showtime with id " + showtimeId + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Showtime", "id", showtimeId));
     }
 
     public List<ShowtimeDTO> getShowtimesByMovie(Long movieId) {
         // Validate movie exists
         if (!movieRepository.existsById(movieId)) {
-            throw new EntityNotFoundException("Movie with ID " + movieId + " not found");
+            throw new ResourceNotFoundException("Movie", "id", movieId);
         }
 
         return showtimeRepository.findByMovieId(movieId).stream()
@@ -55,7 +58,7 @@ public class ShowtimeService {
         List<Showtime> showtimes = showtimeRepository.findByTheater(theater);
 
         if (showtimes.isEmpty()) {
-            throw new EntityNotFoundException("No showtimes found for theater '" + theater + "'");
+            throw new ResourceNotFoundException("Showtime", "theater", theater);
         }
 
         return showtimes.stream()
@@ -68,15 +71,16 @@ public class ShowtimeService {
         // Validate that the movie exists
         Movie movie = movieRepository.findById(showtimeDTO.getMovieId())
                 .orElseThrow(
-                        () -> new EntityNotFoundException("Movie with ID " + showtimeDTO.getMovieId() + " not found"));
+                        () -> new ResourceNotFoundException("Movie", "id", showtimeDTO.getMovieId()));
 
         if (showtimeDTO.getStartTime().isAfter(showtimeDTO.getEndTime())) {
-            throw new IllegalArgumentException("Start time must be before end time");
+            throw new InvalidRequestException("Start time must be before end time");
         }
+
         // Validate showtime is in the future
         LocalDateTime now = LocalDateTime.now();
         if (showtimeDTO.getStartTime().isBefore(now)) {
-            throw new IllegalArgumentException("Showtime must be scheduled for future dates");
+            throw new InvalidRequestException("Showtime must be scheduled for future dates");
         }
 
         // Check for overlapping showtimes in the same theater
@@ -86,13 +90,11 @@ public class ShowtimeService {
                 showtimeDTO.getEndTime());
 
         if (!overlappingShowtimes.isEmpty()) {
-            throw new IllegalStateException(
-                    "There is already a showtime scheduled in this theater at the selected time");
+            throw new ConflictException("There is already a showtime scheduled in this theater at the selected time");
         }
 
         // Create and save the new showtime
-        Showtime showtime = convertToEntity(showtimeDTO);
-        showtime.setMovie(movie);
+        Showtime showtime = convertToEntity(showtimeDTO, movie);
         Showtime savedShowtime = showtimeRepository.save(showtime);
 
         return convertToDTO(savedShowtime);
@@ -101,28 +103,38 @@ public class ShowtimeService {
     @Transactional
     public ShowtimeDTO updateShowtime(Long showtimeId, ShowtimeDTO showtimeDTO) {
         Showtime showtime = showtimeRepository.findById(showtimeId)
-                .orElseThrow(() -> new EntityNotFoundException("Showtime with id " + showtimeId + " not found"));
-
+                .orElseThrow(() -> new ResourceNotFoundException("Showtime", "id", showtimeId));
         if (showtimeDTO.getStartTime().isAfter(showtimeDTO.getEndTime())) {
-            throw new IllegalArgumentException("Start time must be before end time");
+            throw new InvalidRequestException("Start time must be before end time");
         }
         // Validate showtime is in the future
         LocalDateTime now = LocalDateTime.now();
         if (showtimeDTO.getStartTime().isBefore(now)) {
-            throw new IllegalArgumentException("Showtime must be scheduled for future dates");
+            throw new InvalidRequestException("Showtime must be scheduled for future dates");
         }
-        showtime.setMovie(movieRepository.findById(showtimeDTO.getMovieId())
-                .orElseThrow(
-                        () -> new EntityNotFoundException("Movie with ID " + showtimeDTO.getMovieId() + " not found")));
-        // Check for overlapping showtimes in the same theater (excluding this showtime)
-        List<Showtime> overlappingShowtimes = showtimeRepository.findOverlappingShowtimes(
-                showtime.getTheater(),
-                showtimeDTO.getStartTime(),
-                showtimeDTO.getEndTime());
+        Movie movie = movieRepository.findById(showtimeDTO.getMovieId())
+                .orElseThrow(() -> new ResourceNotFoundException("Movie", "id", showtimeDTO.getMovieId()));
+        showtime.setMovie(movie);
 
-        if (!overlappingShowtimes.isEmpty()) {
-            throw new IllegalStateException(
-                    "There is already a showtime scheduled in this theater at the selected time");
+        // Only check for overlapping showtimes if we're changing the time or theater
+        if (!showtime.getTheater().equals(showtimeDTO.getTheater()) ||
+                !showtime.getStartTime().equals(showtimeDTO.getStartTime()) ||
+                !showtime.getEndTime().equals(showtimeDTO.getEndTime())) {
+
+            List<Showtime> overlappingShowtimes = showtimeRepository.findOverlappingShowtimes(
+                    showtimeDTO.getTheater(),
+                    showtimeDTO.getStartTime(),
+                    showtimeDTO.getEndTime());
+
+            // Filter out the current showtime from the overlapping list
+            overlappingShowtimes = overlappingShowtimes.stream()
+                    .filter(s -> !s.getId().equals(showtimeId))
+                    .collect(Collectors.toList());
+
+            if (!overlappingShowtimes.isEmpty()) {
+                throw new ConflictException(
+                        "There is already a showtime scheduled in this theater at the selected time");
+            }
         }
         showtime.setTheater(showtimeDTO.getTheater());
         showtime.setStartTime(showtimeDTO.getStartTime());
@@ -135,7 +147,7 @@ public class ShowtimeService {
 
     public void deleteShowtime(Long showtimeId) {
         if (!showtimeRepository.existsById(showtimeId)) {
-            throw new EntityNotFoundException("Showtime with ID " + showtimeId + " not found");
+            throw new ResourceNotFoundException("Showtime", "id", showtimeId);
         }
 
         showtimeRepository.deleteById(showtimeId);
@@ -152,12 +164,10 @@ public class ShowtimeService {
                 .build();
     }
 
-    private Showtime convertToEntity(ShowtimeDTO showtimeDTO) {
+    private Showtime convertToEntity(ShowtimeDTO showtimeDTO, Movie movie) {
         return Showtime.builder()
                 .id(showtimeDTO.getId())
-                .movie(movieRepository.findById(showtimeDTO.getMovieId())
-                        .orElseThrow(() -> new EntityNotFoundException(
-                                "Movie with ID " + showtimeDTO.getMovieId() + " not found")))
+                .movie(movie)
                 .theater(showtimeDTO.getTheater())
                 .startTime(showtimeDTO.getStartTime())
                 .endTime(showtimeDTO.getEndTime())
